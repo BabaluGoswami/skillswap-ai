@@ -17,8 +17,9 @@ const startServer = async () => {
     app.set('io', io);
     
     // Start listening
-    server.listen(env.PORT, () => {
-      console.log(`🚀 SkillSwap AI Server running on port ${env.PORT} in ${env.NODE_ENV} mode`);
+    const PORT = process.env.PORT || 5000;
+    server.listen(PORT, () => {
+      console.log(`🚀 SkillSwap AI Server running on port ${PORT} in ${env.NODE_ENV} mode`);
     });
   } catch (error) {
     console.error(`Fatal server error: ${error.message}`);

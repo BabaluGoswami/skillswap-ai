@@ -60,7 +60,19 @@ app.get('/api/health', (req, res) => {
     env: env.NODE_ENV
   }, HTTP_STATUS.OK);
 });
-
+app.get("/", (req, res) => {
+  res.json({
+    success: true,
+    message: "SkillSwap AI Backend is Running 🚀"
+  });
+});
+app.get("/health", (req, res) => {
+  res.status(200).json({
+    status: "ok",
+    mongodb: "connected",
+    time: new Date()
+  });
+});
 // Fallback for unhandled routes
 app.use('*', (req, res) => {
   return ApiResponse.error(
