@@ -20,22 +20,32 @@ const app = express();
 
 // Configure CORS
 const allowedOrigins = [
-  'http://localhost:5173',
-  'http://127.0.0.1:5173',
-  env.FRONTEND_URL
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  "https://skillswap-ai-khaki.vercel.app",
+  env.FRONTEND_URL,
 ].filter(Boolean);
 
-app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-      return callback(new Error(msg), false);
-    }
-    return callback(null, true);
-  },
-  credentials: true
-}));
+console.log("Allowed Origins:", allowedOrigins);
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      console.log("Incoming Origin:", origin);
+
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      console.log("Blocked Origin:", origin);
+
+      return callback(new Error("Not allowed by CORS"));
+    },
+    credentials: true,
+  })
+);
 
 // Apply basic middlewares
 app.use(express.json());
