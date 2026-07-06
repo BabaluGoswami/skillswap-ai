@@ -1,0 +1,111 @@
+import mongoose from 'mongoose';
+import bcryptjs from 'bcryptjs';
+
+const userSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: [true, 'Name is required'],
+    trim: true,
+  },
+  email: {
+    type: String,
+    required: [true, 'Email is required'],
+    unique: true,
+    lowercase: true,
+    trim: true,
+  },
+  password: {
+    type: String,
+    required: [true, 'Password is required'],
+    minlength: [6, 'Password must be at least 6 characters'],
+    select: false, // Prevents sending hash in standard queries
+  },
+  role: {
+    type: String,
+    enum: ['Student', 'Mentor', 'Admin'],
+    default: 'Student',
+  },
+  skillsToTeach: [{
+    type: String,
+    trim: true,
+  }],
+  skillsToLearn: [{
+    type: String,
+    trim: true,
+  }],
+  ratingAverage: {
+    type: Number,
+    default: 0.0,
+  },
+  totalSessions: {
+    type: Number,
+    default: 0,
+  },
+  totalTeachingHours: {
+    type: Number,
+    default: 0,
+  },
+  university: {
+    type: String,
+    trim: true,
+    default: '',
+  },
+  branch: {
+    type: String,
+    trim: true,
+    default: '',
+  },
+  year: {
+    type: String,
+    trim: true,
+    default: '',
+  },
+  bio: {
+    type: String,
+    trim: true,
+    maxlength: [250, 'Bio cannot exceed 250 characters'],
+    default: '',
+  },
+  github: {
+    type: String,
+    trim: true,
+    default: '',
+  },
+  linkedin: {
+    type: String,
+    trim: true,
+    default: '',
+  },
+  portfolio: {
+    type: String,
+    trim: true,
+    default: '',
+  },
+  profileImage: {
+    type: String,
+    default: '',
+  }
+}, {
+  timestamps: true,
+});
+
+// Pre-save middleware to hash passwords automatically before save
+userSchema.pre('save', async function (next) {
+  if (!this.isModified('password')) return next();
+  try {
+    const salt = await bcryptjs.genSalt(10);
+    this.password = await bcryptjs.hash(this.password, salt);
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Instance method to check password match
+userSchema.methods.comparePassword = async function (candidatePassword) {
+  return await bcryptjs.compare(candidatePassword, this.password);
+};
+
+const User = mongoose.model('User', userSchema);
+
+export default User;

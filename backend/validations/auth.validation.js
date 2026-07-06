@@ -1,0 +1,28 @@
+import { z } from 'zod';
+
+export const registerSchema = z.object({
+  body: z.object({
+    name: z.string({
+      required_error: 'Name is required.',
+    }).min(2, 'Name must be at least 2 characters.'),
+    email: z.string({
+      required_error: 'Email is required.',
+    }).email('Must be a valid email address.'),
+    password: z.string({
+      required_error: 'Password is required.',
+    }).min(6, 'Password must be at least 6 characters.'),
+    skillsToTeach: z.array(z.string()).optional().default([]),
+    skillsToLearn: z.array(z.string()).optional().default([]),
+  }),
+});
+
+export const loginSchema = z.object({
+  body: z.object({
+    email: z.string({
+      required_error: 'Email is required.',
+    }).email('Must be a valid email address.'),
+    password: z.string({
+      required_error: 'Password is required.',
+    }).min(1, 'Password is required.'),
+  }),
+});
