@@ -9,6 +9,9 @@ import userRouter from './routes/user.routes.js';
 import swapRouter from './routes/swap.routes.js';
 import chatRouter from './routes/chat.routes.js';
 import statisticsRouter from './routes/statistics.routes.js';
+import feedbackRouter from './routes/feedback.routes.js';
+import adminRouter from './routes/admin.routes.js';
+import reportRouter from './routes/report.routes.js';
 import { ApiResponse } from './utils/ApiResponse.js';
 import { HTTP_STATUS, RESPONSE_MESSAGES } from './utils/constants.js';
 import { env } from './config/env.js';
@@ -61,6 +64,9 @@ app.use('/api/users', userRouter);
 app.use('/api/swaps', swapRouter);
 app.use('/api/chat', chatRouter);
 app.use('/api/statistics', statisticsRouter);
+app.use('/api/feedback', feedbackRouter);
+app.use('/api/admin', adminRouter);
+app.use('/api/reports', reportRouter);
 
 // Health check endpoint (scalable and clean)
 app.get('/api/health', (req, res) => {

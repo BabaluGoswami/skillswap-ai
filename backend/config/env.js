@@ -15,6 +15,15 @@ const envSchema = z.object({
     required_error: 'JWT_SECRET is required to sign tokens.',
   }).min(10, 'JWT_SECRET should be a secure key containing at least 10 characters.'),
   JWT_EXPIRES_IN: z.string().default('7d'),
+  CLOUDINARY_CLOUD_NAME: z.string({
+    required_error: 'CLOUDINARY_CLOUD_NAME is required for image uploads.',
+  }),
+  CLOUDINARY_API_KEY: z.string({
+    required_error: 'CLOUDINARY_API_KEY is required for image uploads.',
+  }),
+  CLOUDINARY_API_SECRET: z.string({
+    required_error: 'CLOUDINARY_API_SECRET is required for image uploads.',
+  }),
 });
 
 // Perform validation

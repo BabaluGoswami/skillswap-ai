@@ -19,6 +19,7 @@ router.put(
   protect, 
   upload.single('profileImage'), 
   (req, res, next) => {
+    console.log("PUT /api/users/profile route matched");
     // Parse body parameters so Zod validation middleware can inspect them
     // (since multer doesn't feed form-data fields into JSON format directly before validation)
     next();

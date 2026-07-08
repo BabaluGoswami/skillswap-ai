@@ -41,6 +41,7 @@ export const register = asyncHandler(async (req, res) => {
     password,
     skillsToTeach,
     skillsToLearn,
+    role: 'Student',
   });
 
   // Generate token
@@ -90,6 +91,32 @@ export const login = asyncHandler(async (req, res) => {
       'Invalid email or password credentials.',
       [],
       HTTP_STATUS.UNAUTHORIZED
+    );
+  }
+
+  // Check account status
+  if (user.status === 'banned') {
+    return ApiResponse.error(
+      res,
+      'Your account has been banned. Please contact support.',
+      [],
+      HTTP_STATUS.FORBIDDEN
+    );
+  }
+  if (user.status === 'disabled') {
+    return ApiResponse.error(
+      res,
+      'Your account has been disabled. Please contact support.',
+      [],
+      HTTP_STATUS.FORBIDDEN
+    );
+  }
+  if (user.status === 'deleted') {
+    return ApiResponse.error(
+      res,
+      'Your account has been deleted.',
+      [],
+      HTTP_STATUS.FORBIDDEN
     );
   }
 

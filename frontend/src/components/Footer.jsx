@@ -1,12 +1,15 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { GraduationCap, Github, Twitter, Linkedin, Heart } from 'lucide-react';
+import { useApp } from '@context/AppContext.jsx';
 
 /**
  * Premium structured Footer component.
  * Includes logo brand space, links grid, and standard copyright statement.
  */
 const Footer = () => {
+  const { isAuthenticated, setIsFeedbackModalOpen, setFeedbackInitialType } = useApp();
+
   return (
     <footer className="bg-slate-900 text-slate-400 border-t border-slate-800">
       {/* Top Section */}
@@ -56,7 +59,37 @@ const Footer = () => {
               <li><a href="#" className="hover:text-white transition-colors">FAQ & Support</a></li>
               <li><a href="#" className="hover:text-white transition-colors">Terms of Service</a></li>
               <li><a href="#" className="hover:text-white transition-colors">Privacy Policy</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Contact Support</a></li>
+              {isAuthenticated && (
+                <>
+                  <li>
+                    <button 
+                      onClick={() => { setFeedbackInitialType('General Feedback'); setIsFeedbackModalOpen(true); }}
+                      className="hover:text-white transition-colors cursor-pointer text-left w-full bg-transparent border-none p-0"
+                    >
+                      Give Feedback
+                    </button>
+                  </li>
+                  <li>
+                    <button 
+                      onClick={() => { setFeedbackInitialType('Report a Bug'); setIsFeedbackModalOpen(true); }}
+                      className="hover:text-white transition-colors cursor-pointer text-left w-full bg-transparent border-none p-0"
+                    >
+                      Report a Bug
+                    </button>
+                  </li>
+                  <li>
+                    <button 
+                      onClick={() => { setFeedbackInitialType('Suggest a Feature'); setIsFeedbackModalOpen(true); }}
+                      className="hover:text-white transition-colors cursor-pointer text-left w-full bg-transparent border-none p-0"
+                    >
+                      Suggest a Feature
+                    </button>
+                  </li>
+                </>
+              )}
+              {!isAuthenticated && (
+                <li><a href="#" className="hover:text-white transition-colors">Contact Support</a></li>
+              )}
             </ul>
           </div>
 

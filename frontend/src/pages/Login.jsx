@@ -28,7 +28,11 @@ const Login = () => {
     setApiError('');
     const result = await loginUser(data.email, data.password);
     if (result.success) {
-      navigate('/dashboard');
+      if (result.user?.role === 'Admin') {
+        navigate('/admin');
+      } else {
+        navigate('/dashboard');
+      }
     } else {
       setApiError(result.error);
     }

@@ -1,5 +1,6 @@
 import SwapRequest from '../models/SwapRequest.js';
 import Conversation from '../models/Conversation.js';
+import User from '../models/User.js';
 
 class SwapService {
   /**
@@ -38,6 +39,16 @@ class SwapService {
       status: 'Pending'
     });
 
+    // Notify receiver
+    const senderUser = await User.findById(senderId);
+    const receiverUser = await User.findById(receiverId);
+    if (senderUser && receiverUser) {
+      receiverUser.notifications.push({
+        message: `You received a new skill swap request from "${senderUser.name}".`
+      });
+      await receiverUser.save();
+    }
+
     return await this.getPopulatedRequest(swapRequest._id);
   }
 
@@ -60,6 +71,16 @@ class SwapService {
 
     request.status = 'Accepted';
     await request.save();
+
+    // Notify sender
+    const senderUser = await User.findById(request.sender);
+    const receiverUser = await User.findById(request.receiver);
+    if (senderUser && receiverUser) {
+      senderUser.notifications.push({
+        message: `Your skill swap request sent to "${receiverUser.name}" has been accepted!`
+      });
+      await senderUser.save();
+    }
 
     // Automatically create a Conversation if one does not already exist
     let conv = await Conversation.findOne({
@@ -94,6 +115,16 @@ class SwapService {
 
     request.status = 'Rejected';
     await request.save();
+
+    // Notify sender
+    const senderUser2 = await User.findById(request.sender);
+    const receiverUser2 = await User.findById(request.receiver);
+    if (senderUser2 && receiverUser2) {
+      senderUser2.notifications.push({
+        message: `Your skill swap request sent to "${receiverUser2.name}" has been rejected.`
+      });
+      await senderUser2.save();
+    }
 
     return await this.getPopulatedRequest(request._id);
   }

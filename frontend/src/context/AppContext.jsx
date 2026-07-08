@@ -16,6 +16,10 @@ export const AppProvider = ({ children }) => {
 
   const [loading, setLoading] = useState(false);
   const [socket, setSocket] = useState(null);
+  const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
+  const [feedbackInitialType, setFeedbackInitialType] = useState('General Feedback');
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [reportTargetUser, setReportTargetUser] = useState(null); // { id, name }
 
   // Manage socket.io-client lifecycle
   useEffect(() => {
@@ -521,6 +525,284 @@ export const AppProvider = ({ children }) => {
     }
   };
 
+  // Submit feedback with screenshot support (multipart/form-data)
+  const submitFeedback = async (formData) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/feedback`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData,
+      });
+
+      const resData = await response.json();
+      if (!response.ok) {
+        throw new Error(resData.message || 'Failed to submit feedback.');
+      }
+      return { success: true, data: resData.data };
+    } catch (error) {
+      console.error('Submit Feedback Error:', error.message);
+      return { success: false, error: error.message };
+    }
+  };
+
+  // Get current user's feedback submissions (paginated)
+  const getMyFeedback = async (page = 1, limit = 10) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/feedback/my?page=${page}&limit=${limit}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      const resData = await response.json();
+      if (!response.ok) {
+        throw new Error(resData.message || 'Failed to fetch feedback history.');
+      }
+      return { success: true, data: resData.data };
+    } catch (error) {
+      console.error('Get Feedback Error:', error.message);
+      return { success: false, error: error.message };
+    }
+  };
+
+  // Helper for admin API calls
+  const adminFetch = async (endpoint, options = {}) => {
+    const headers = {
+      'Authorization': `Bearer ${token}`,
+      ...options.headers,
+    };
+    if (!(options.body instanceof FormData) && !headers['Content-Type']) {
+      headers['Content-Type'] = 'application/json';
+    }
+
+    const response = await fetch(`${API_BASE_URL}/api/admin${endpoint}`, {
+      ...options,
+      headers,
+    });
+
+    const resData = await response.json();
+    if (!response.ok) {
+      throw new Error(resData.message || 'Admin request failed.');
+    }
+    return { success: true, data: resData.data };
+  };
+
+  const getAdminDashboard = async () => {
+    try {
+      return await adminFetch('/dashboard');
+    } catch (error) {
+      console.error('Admin Dashboard Error:', error.message);
+      return { success: false, error: error.message };
+    }
+  };
+
+  const getAdminUsers = async (page = 1, limit = 10, search = '', role = '', status = '', sortBy = '') => {
+    try {
+      const queryParams = new URLSearchParams({
+        page,
+        limit,
+        search,
+        role,
+        status,
+        sortBy
+      }).toString();
+      return await adminFetch(`/users?${queryParams}`);
+    } catch (error) {
+      console.error('Admin Users Error:', error.message);
+      return { success: false, error: error.message };
+    }
+  };
+
+  const updateAdminUserRole = async (id, role) => {
+    try {
+      return await adminFetch(`/users/${id}/role`, {
+        method: 'PATCH',
+        body: JSON.stringify({ role }),
+      });
+    } catch (error) {
+      console.error('Admin Role Edit Error:', error.message);
+      return { success: false, error: error.message };
+    }
+  };
+
+  const updateAdminUserStatus = async (id, status) => {
+    try {
+      return await adminFetch(`/users/${id}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status }),
+      });
+    } catch (error) {
+      console.error('Admin Status Edit Error:', error.message);
+      return { success: false, error: error.message };
+    }
+  };
+
+  const deleteAdminUser = async (id) => {
+    try {
+      return await adminFetch(`/users/${id}`, {
+        method: 'DELETE',
+      });
+    } catch (error) {
+      console.error('Admin Delete User Error:', error.message);
+      return { success: false, error: error.message };
+    }
+  };
+
+  const getAdminFeedbacks = async (page = 1, limit = 10, search = '', type = '', status = '', sortBy = '') => {
+    try {
+      const queryParams = new URLSearchParams({
+        page,
+        limit,
+        search,
+        type,
+        status,
+        sortBy
+      }).toString();
+      return await adminFetch(`/feedback?${queryParams}`);
+    } catch (error) {
+      console.error('Admin Feedback Error:', error.message);
+      return { success: false, error: error.message };
+    }
+  };
+
+  const updateAdminFeedback = async (id, status, adminNote) => {
+    try {
+      return await adminFetch(`/feedback/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status, adminNote }),
+      });
+    } catch (error) {
+      console.error('Admin Feedback Moderation Error:', error.message);
+      return { success: false, error: error.message };
+    }
+  };
+
+  // Submit User Report
+  const submitUserReport = async (reportedUserId, reason, description, file) => {
+    try {
+      const formData = new FormData();
+      formData.append('reportedUser', reportedUserId);
+      formData.append('reason', reason);
+      formData.append('description', description);
+      if (file) {
+        formData.append('screenshot', file);
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/reports`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      const resData = await response.json();
+      if (!response.ok) {
+        throw new Error(resData.message || 'Failed to submit user report.');
+      }
+      return { success: true, report: resData.data };
+    } catch (error) {
+      console.error('Submit User Report Error:', error.message);
+      return { success: false, error: error.message };
+    }
+  };
+
+  // Fetch My Reports
+  const getMyReports = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/reports/my`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const resData = await response.json();
+      if (!response.ok) {
+        throw new Error(resData.message || 'Failed to fetch my reports.');
+      }
+      return { success: true, reports: resData.data };
+    } catch (error) {
+      console.error('Get My Reports Error:', error.message);
+      return { success: false, error: error.message };
+    }
+  };
+
+  // Fetch Admin Reports (Admin Only)
+  const getAdminReports = async (page = 1, limit = 10, search = '', reason = '', status = '', sortBy = 'newest') => {
+    try {
+      const queryParams = new URLSearchParams({
+        page,
+        limit,
+        search,
+        reason,
+        status,
+        sortBy
+      });
+      return await adminFetch(`/reports?${queryParams.toString()}`, {
+        method: 'GET'
+      });
+    } catch (error) {
+      console.error('Admin Fetch Reports Error:', error.message);
+      return { success: false, error: error.message };
+    }
+  };
+
+  // Update Report, Warn, Disable, Ban (Admin Only)
+  const updateAdminReport = async (reportId, action, status = '', adminNote = '') => {
+    try {
+      return await adminFetch(`/reports/${reportId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ action, status, adminNote })
+      });
+    } catch (error) {
+      console.error('Admin Update Report Error:', error.message);
+      return { success: false, error: error.message };
+    }
+  };
+
+  // Fetch User Notifications
+  const getUserNotifications = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/reports/notifications`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const resData = await response.json();
+      if (!response.ok) {
+        throw new Error(resData.message || 'Failed to fetch notifications.');
+      }
+      return { success: true, notifications: resData.data };
+    } catch (error) {
+      console.error('Fetch Notifications Error:', error.message);
+      return { success: false, error: error.message };
+    }
+  };
+
+  // Clear Notifications
+  const clearNotifications = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/reports/notifications`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const resData = await response.json();
+      if (!response.ok) {
+        throw new Error(resData.message || 'Failed to clear notifications.');
+      }
+      return { success: true, notifications: [] };
+    } catch (error) {
+      console.error('Clear Notifications Error:', error.message);
+      return { success: false, error: error.message };
+    }
+  };
+
   const value = {
     currentUser,
     token,
@@ -545,6 +827,29 @@ export const AppProvider = ({ children }) => {
     sendChatMessage,
     uploadChatAttachment,
     getPlatformStatistics,
+    isFeedbackModalOpen,
+    setIsFeedbackModalOpen,
+    feedbackInitialType,
+    setFeedbackInitialType,
+    submitFeedback,
+    getMyFeedback,
+    getAdminDashboard,
+    getAdminUsers,
+    updateAdminUserRole,
+    updateAdminUserStatus,
+    deleteAdminUser,
+    getAdminFeedbacks,
+    updateAdminFeedback,
+    submitUserReport,
+    getMyReports,
+    getAdminReports,
+    updateAdminReport,
+    getUserNotifications,
+    clearNotifications,
+    isReportModalOpen,
+    setIsReportModalOpen,
+    reportTargetUser,
+    setReportTargetUser,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

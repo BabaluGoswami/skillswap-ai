@@ -25,6 +25,12 @@ const userSchema = new mongoose.Schema({
     enum: ['Student', 'Mentor', 'Admin'],
     default: 'Student',
   },
+  status: {
+    type: String,
+    enum: ['active', 'disabled', 'banned', 'deleted'],
+    default: 'active',
+    index: true,
+  },
   skillsToTeach: [{
     type: String,
     trim: true,
@@ -84,7 +90,20 @@ const userSchema = new mongoose.Schema({
   profileImage: {
     type: String,
     default: '',
-  }
+  },
+  profileImagePublicId: {
+    type: String,
+    default: '',
+  },
+  warningsCount: {
+    type: Number,
+    default: 0,
+  },
+  notifications: [{
+    message: { type: String, required: true },
+    read: { type: Boolean, default: false },
+    createdAt: { type: Date, default: Date.now }
+  }]
 }, {
   timestamps: true,
 });

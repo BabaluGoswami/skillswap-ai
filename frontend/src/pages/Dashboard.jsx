@@ -16,7 +16,8 @@ import {
 const Dashboard = () => {
   const { 
     currentUser, token, addUserSkillToTeach, getMatchedUsers, 
-    sendSwapRequest, getSentRequests, getReceivedRequests 
+    sendSwapRequest, getSentRequests, getReceivedRequests,
+    setReportTargetUser, setIsReportModalOpen 
   } = useApp();
   const navigate = useNavigate();
   const [showAddModal, setShowAddModal] = useState(false);
@@ -346,46 +347,59 @@ const Dashboard = () => {
                       )}
                     </div>
 
-                    {/* Swap CTA */}
-                    {(() => {
-                      const reqStatus = requestsMap[peer.id];
-                      const isProcessing = processingId === peer.id;
-                      
-                      if (reqStatus === 'Pending') {
-                        return (
-                          <button 
-                            type="button" 
-                            disabled
-                            className="w-full xl:w-auto px-5 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 rounded-xl text-xs font-bold border border-slate-200 dark:border-slate-700/55 select-none cursor-not-allowed transition-all"
-                          >
-                            Request Pending
-                          </button>
-                        );
-                      }
-                      
-                      if (reqStatus === 'Accepted') {
-                        return (
-                          <button 
-                            type="button" 
-                            disabled
-                            className="w-full xl:w-auto px-5 py-2.5 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 rounded-xl text-xs font-bold border border-emerald-105 dark:border-emerald-900/50 select-none cursor-not-allowed transition-all"
-                          >
-                            Accepted
-                          </button>
-                        );
-                      }
+                    {/* Swap CTA & Report User */}
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 shrink-0 w-full xl:w-auto">
+                      {(() => {
+                        const reqStatus = requestsMap[peer.id];
+                        const isProcessing = processingId === peer.id;
+                        
+                        if (reqStatus === 'Pending') {
+                          return (
+                            <button 
+                              type="button" 
+                              disabled
+                              className="w-full xl:w-auto px-5 py-2.5 bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-550 rounded-xl text-xs font-bold border border-slate-200 dark:border-slate-700/55 select-none cursor-not-allowed transition-all"
+                            >
+                              Request Pending
+                            </button>
+                          );
+                        }
+                        
+                        if (reqStatus === 'Accepted') {
+                          return (
+                            <button 
+                              type="button" 
+                              disabled
+                              className="w-full xl:w-auto px-5 py-2.5 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 rounded-xl text-xs font-bold border border-emerald-105 dark:border-emerald-900/50 select-none cursor-not-allowed transition-all"
+                            >
+                              Accepted
+                            </button>
+                          );
+                        }
 
-                      return (
-                        <button 
-                          type="button" 
-                          disabled={isProcessing}
-                          onClick={() => handleRequestSwap(peer.id)}
-                          className="w-full xl:w-auto px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-blue-500 text-white rounded-xl text-xs font-bold hover:from-indigo-700 hover:to-blue-600 shadow-md shadow-indigo-100 dark:shadow-none transition-all disabled:opacity-60"
-                        >
-                          {isProcessing ? 'Processing...' : 'Request Swap'}
-                        </button>
-                      );
-                    })()}
+                        return (
+                          <button 
+                            type="button" 
+                            disabled={isProcessing}
+                            onClick={() => handleRequestSwap(peer.id)}
+                            className="w-full xl:w-auto px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-blue-500 text-white rounded-xl text-xs font-bold hover:from-indigo-700 hover:to-blue-600 shadow-md shadow-indigo-100 dark:shadow-none transition-all disabled:opacity-60 cursor-pointer"
+                          >
+                            {isProcessing ? 'Processing...' : 'Request Swap'}
+                          </button>
+                        );
+                      })()}
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setReportTargetUser({ id: peer.id, name: peer.name });
+                          setIsReportModalOpen(true);
+                        }}
+                        className="px-4 py-2.5 border border-rose-200 dark:border-rose-900/40 hover:bg-rose-50 dark:hover:bg-rose-950/25 text-rose-600 dark:text-rose-455 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1 shrink-0"
+                      >
+                        ⚠ Report
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>

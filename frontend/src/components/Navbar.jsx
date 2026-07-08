@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useApp } from '@context/AppContext.jsx';
 import ThemeToggle from './ThemeToggle.jsx';
 import { getProfileImageUrl } from '@utils/imageHelper.js';
-import { GraduationCap, Menu, X, ArrowRight, LogOut, User } from 'lucide-react';
+import { GraduationCap, Menu, X, ArrowRight, LogOut, User, ChevronDown } from 'lucide-react';
 
 /**
  * Sticky responsive header navigation bar.
@@ -13,16 +13,17 @@ const Navbar = () => {
   const { isAuthenticated, currentUser, logoutUser } = useApp();
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const location = useLocation();
+  const dropdownRef = useRef(null);
 
-  // Navigation Links configuration
+  // Navigation Links configuration (full list for mobile drawer)
   const navLinks = [
     { name: 'Home', path: '/' },
     { name: 'Features', path: '/features' },
     { name: 'About', path: '/about' },
   ];
 
-  // If authenticated, prepend Dashboard, Profile & Swap links for easy navigation
   if (isAuthenticated) {
     if (!navLinks.some(link => link.path === '/dashboard')) {
       navLinks.push({ name: 'Dashboard', path: '/dashboard' });
@@ -39,6 +40,19 @@ const Navbar = () => {
     if (!navLinks.some(link => link.path === '/chat')) {
       navLinks.push({ name: 'Chat', path: '/chat' });
     }
+    if (!navLinks.some(link => link.path === '/feedback/my')) {
+      navLinks.push({ name: 'My Feedback', path: '/feedback/my' });
+    }
+  }
+
+  // Primary navigation links for desktop header
+  const primaryLinks = [
+    { name: 'Home', path: '/' },
+    { name: 'Features', path: '/features' },
+    { name: 'About', path: '/about' },
+  ];
+  if (isAuthenticated) {
+    primaryLinks.push({ name: 'Dashboard', path: '/dashboard' });
   }
 
   // Monitor scrolling to toggle background opacity/blur
@@ -52,6 +66,17 @@ const Navbar = () => {
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Click outside listener to close profile dropdown
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener('click', handleOutsideClick);
+    return () => document.removeEventListener('click', handleOutsideClick);
   }, []);
 
   const isActive = (path) => location.pathname === path;
@@ -75,9 +100,9 @@ const Navbar = () => {
           </Link>
 
           {/* Desktop Navigation Links */}
-          <div className="hidden md:flex items-center gap-8">
-            <div className="flex items-center gap-6">
-              {navLinks.map((link) => (
+          <div className="hidden md:flex items-center gap-4 lg:gap-8">
+            <div className="flex items-center gap-3 lg:gap-6">
+              {primaryLinks.map((link) => (
                 <Link
                   key={link.name}
                   to={link.path}
@@ -98,8 +123,11 @@ const Navbar = () => {
               <ThemeToggle />
               
               {isAuthenticated ? (
-                <div className="flex items-center gap-4">
-                  <Link to="/profile" className="flex items-center gap-2 text-slate-700 dark:text-slate-200 bg-slate-100/60 dark:bg-slate-800/60 hover:bg-slate-200/40 dark:hover:bg-slate-800/80 rounded-xl px-3 py-1.5 border border-slate-200/50 dark:border-slate-700/50 transition-colors duration-300">
+                <div ref={dropdownRef} className="relative">
+                  <button
+                    onClick={() => setDropdownOpen(!dropdownOpen)}
+                    className="flex items-center gap-2 text-slate-700 dark:text-slate-200 bg-slate-100/60 dark:bg-slate-800/60 hover:bg-slate-200/40 dark:hover:bg-slate-800/80 rounded-xl px-3 py-1.5 border border-slate-200/50 dark:border-slate-700/50 transition-colors duration-300 cursor-pointer"
+                  >
                     {currentUser?.profileImage ? (
                       <img 
                         src={getProfileImageUrl(currentUser.profileImage, currentUser.updatedAt)} 
@@ -110,14 +138,74 @@ const Navbar = () => {
                       <User className="h-4 w-4 text-indigo-500 dark:text-indigo-400 shrink-0" />
                     )}
                     <span className="text-xs font-semibold">{currentUser?.name}</span>
-                  </Link>
-                  <button
-                    onClick={logoutUser}
-                    className="flex items-center gap-1.5 font-medium text-sm text-slate-600 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-400 transition-colors duration-300 px-4 py-2"
-                  >
-                    <LogOut className="h-4 w-4" />
-                    Sign Out
+                    <ChevronDown className={`h-3 w-3 text-slate-500 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
                   </button>
+
+                  {dropdownOpen && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl shadow-xl py-2 z-50 animate-fade-in text-sm">
+                      <Link 
+                        to="/profile" 
+                        onClick={() => setDropdownOpen(false)}
+                        className="block px-4 py-2 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-850 transition-colors"
+                      >
+                        Profile
+                      </Link>
+                      <Link 
+                        to="/swaps/incoming" 
+                        onClick={() => setDropdownOpen(false)}
+                        className="block px-4 py-2 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-850 transition-colors"
+                      >
+                        Received Swaps
+                      </Link>
+                      <Link 
+                        to="/swaps/sent" 
+                        onClick={() => setDropdownOpen(false)}
+                        className="block px-4 py-2 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-850 transition-colors"
+                      >
+                        Sent Swaps
+                      </Link>
+                      <Link 
+                        to="/chat" 
+                        onClick={() => setDropdownOpen(false)}
+                        className="block px-4 py-2 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-850 transition-colors"
+                      >
+                        Chat
+                      </Link>
+                      <Link 
+                        to="/feedback/my" 
+                        onClick={() => setDropdownOpen(false)}
+                        className="block px-4 py-2 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-850 transition-colors"
+                      >
+                        My Feedback
+                      </Link>
+                      <Link 
+                        to="/reports/my" 
+                        onClick={() => setDropdownOpen(false)}
+                        className="block px-4 py-2 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-850 transition-colors"
+                      >
+                        My Reports
+                      </Link>
+                      {currentUser?.role === 'Admin' && (
+                        <Link 
+                          to="/admin" 
+                          onClick={() => setDropdownOpen(false)}
+                          className="block px-4 py-2 font-bold text-indigo-650 dark:text-indigo-400 hover:bg-slate-50 dark:hover:bg-slate-850 transition-colors"
+                        >
+                          Admin Panel
+                        </Link>
+                      )}
+                      <div className="h-px bg-slate-100 dark:bg-slate-800 my-1" />
+                      <button
+                        onClick={() => {
+                          setDropdownOpen(false);
+                          logoutUser();
+                        }}
+                        className="w-full text-left px-4 py-2 text-rose-650 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-colors cursor-pointer font-medium"
+                      >
+                        Sign Out
+                      </button>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <>

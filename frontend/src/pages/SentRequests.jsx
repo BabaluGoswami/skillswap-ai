@@ -12,7 +12,10 @@ import {
  * Displays all requests sent by the currently logged-in user.
  */
 const SentRequests = () => {
-  const { token, getSentRequests, cancelSwapRequest } = useApp();
+  const { 
+    token, getSentRequests, cancelSwapRequest,
+    setReportTargetUser, setIsReportModalOpen 
+  } = useApp();
   const [requests, setRequests] = useState([]);
   const [apiError, setApiError] = useState('');
   const [apiSuccess, setApiSuccess] = useState('');
@@ -146,12 +149,24 @@ const SentRequests = () => {
                       type="button"
                       disabled={actionLoadingId !== null}
                       onClick={() => handleCancel(req._id)}
-                      className="py-2.5 px-4 rounded-xl font-semibold border border-rose-250 dark:border-rose-900/60 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20 text-xs flex items-center justify-center gap-1.5 disabled:opacity-60 transition-all duration-300 w-full md:w-auto"
+                      className="py-2.5 px-4 rounded-xl font-semibold border border-rose-250 dark:border-rose-900/60 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20 text-xs flex items-center justify-center gap-1.5 disabled:opacity-60 transition-all duration-300 w-full md:w-auto cursor-pointer"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                       Cancel
                     </button>
                   )}
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setReportTargetUser({ id: peer._id, name: peer.name });
+                      setIsReportModalOpen(true);
+                    }}
+                    className="p-2 border border-rose-200 dark:border-rose-900/40 hover:bg-rose-50 dark:hover:bg-rose-950/25 text-rose-600 dark:text-rose-400 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1 shrink-0"
+                    title="Report User Profile"
+                  >
+                    ⚠ Report
+                  </button>
 
                 </div>
               </div>

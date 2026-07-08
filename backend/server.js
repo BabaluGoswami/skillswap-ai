@@ -3,12 +3,22 @@ import app from './app.js';
 import connectDB from './config/db.js';
 import { env } from './config/env.js';
 import { initSocket } from './services/socket.js';
+import User from './models/User.js';
 
 // Bootstrapping server
 const startServer = async () => {
   try {
     // Connect to MongoDB
     await connectDB();
+
+    // Idempotent migration to set status = 'active' for legacy users missing it
+    const migrationResult = await User.updateMany(
+      { $or: [{ status: { $exists: false } }, { status: null }, { status: '' }] },
+      { $set: { status: 'active' } }
+    );
+    if (migrationResult.modifiedCount > 0) {
+      console.log(`🧹 Database Migration: Set status = 'active' for ${migrationResult.modifiedCount} legacy users`);
+    }
     
     const server = http.createServer(app);
     

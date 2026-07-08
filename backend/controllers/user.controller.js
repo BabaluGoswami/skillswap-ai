@@ -77,16 +77,19 @@ export const updateProfile = asyncHandler(async (req, res) => {
 
   // 1. Process profile image upload if provided
   if (req.file) {
+    console.log("REQ FILE:", req.file);
     try {
-      // Save new file using StorageService abstraction
-      const imageUrl = await storageService.saveFile(req.file.buffer, req.file.originalname);
+      console.log("Uploading to Cloudinary");
+      // Save new file using StorageService abstraction (returns secure_url and public_id)
+      const uploadResult = await storageService.saveFile(req.file.buffer, req.file.originalname);
       
-      // Delete old file if existed
-      if (user.profileImage) {
-        await storageService.deleteFile(user.profileImage);
+      // Delete old file if existed on Cloudinary using public_id
+      if (user.profileImagePublicId) {
+        await storageService.deleteFile(user.profileImagePublicId);
       }
       
-      user.profileImage = imageUrl;
+      user.profileImage = uploadResult.secure_url;
+      user.profileImagePublicId = uploadResult.public_id;
     } catch (uploadError) {
       return ApiResponse.error(
         res, 

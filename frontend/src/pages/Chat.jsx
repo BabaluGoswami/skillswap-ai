@@ -16,7 +16,8 @@ import {
 const Chat = () => {
   const { 
     token, socket, currentUser, getConversations, 
-    getMessages, sendChatMessage, uploadChatAttachment 
+    getMessages, sendChatMessage, uploadChatAttachment,
+    setReportTargetUser, setIsReportModalOpen 
   } = useApp();
 
   const [conversations, setConversations] = useState([]);
@@ -394,35 +395,48 @@ const Chat = () => {
         {activeConv ? (
           <>
             {/* Header Peer Info */}
-            <div className="p-4 border-b border-slate-50 dark:border-slate-800/60 flex items-center gap-3 bg-slate-50/50 dark:bg-slate-900/50 shrink-0">
-              <div className="relative">
-                <div className="w-10 h-10 rounded-full overflow-hidden border border-slate-200 dark:border-slate-800 flex items-center justify-center bg-indigo-50 dark:bg-indigo-950/40">
-                  {activeConv.peer.profileImage ? (
-                    <img 
-                      src={getProfileImageUrl(activeConv.peer.profileImage, activeConv.updatedAt)} 
-                      alt={activeConv.peer.name} 
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <User className="h-5 w-5 text-indigo-500" />
-                  )}
+            <div className="p-4 border-b border-slate-50 dark:border-slate-800/60 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/50 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <div className="w-10 h-10 rounded-full overflow-hidden border border-slate-200 dark:border-slate-800 flex items-center justify-center bg-indigo-50 dark:bg-indigo-950/40">
+                    {activeConv.peer.profileImage ? (
+                      <img 
+                        src={getProfileImageUrl(activeConv.peer.profileImage, activeConv.updatedAt)} 
+                        alt={activeConv.peer.name} 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <User className="h-5 w-5 text-indigo-500" />
+                    )}
+                  </div>
+                  <span className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-white dark:border-slate-900 ${
+                    onlineStatusMap[activeConv.peer.id] ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-700'
+                  }`} />
                 </div>
-                <span className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-white dark:border-slate-900 ${
-                  onlineStatusMap[activeConv.peer.id] ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-700'
-                }`} />
+                <div>
+                  <h4 className="font-bold text-sm text-slate-900 dark:text-white leading-tight">{activeConv.peer.name}</h4>
+                  <p className="text-[10px] text-slate-400">
+                    {typingState[activeConv.conversationId] ? (
+                      <span className="text-indigo-500 dark:text-indigo-400 font-semibold">typing...</span>
+                    ) : onlineStatusMap[activeConv.peer.id] ? (
+                      'Online'
+                    ) : (
+                      'Offline'
+                    )}
+                  </p>
+                </div>
               </div>
-              <div>
-                <h4 className="font-bold text-sm text-slate-900 dark:text-white leading-tight">{activeConv.peer.name}</h4>
-                <p className="text-[10px] text-slate-400">
-                  {typingState[activeConv.conversationId] ? (
-                    <span className="text-indigo-500 dark:text-indigo-400 font-semibold">typing...</span>
-                  ) : onlineStatusMap[activeConv.peer.id] ? (
-                    'Online'
-                  ) : (
-                    'Offline'
-                  )}
-                </p>
-              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setReportTargetUser({ id: activeConv.peer.id, name: activeConv.peer.name });
+                  setIsReportModalOpen(true);
+                }}
+                className="px-3 py-1.5 border border-rose-200 dark:border-rose-900/40 hover:bg-rose-50 dark:hover:bg-rose-950/25 text-rose-600 dark:text-rose-400 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1 shrink-0"
+              >
+                ⚠ Report
+              </button>
             </div>
 
             {/* Error notifications */}

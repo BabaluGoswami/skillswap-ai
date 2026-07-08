@@ -12,7 +12,10 @@ import {
  * Displays all swap requests sent by other peers.
  */
 const IncomingRequests = () => {
-  const { token, getReceivedRequests, acceptSwapRequest, rejectSwapRequest } = useApp();
+  const { 
+    token, getReceivedRequests, acceptSwapRequest, rejectSwapRequest,
+    setReportTargetUser, setIsReportModalOpen 
+  } = useApp();
   const [requests, setRequests] = useState([]);
   const [apiError, setApiError] = useState('');
   const [apiSuccess, setApiSuccess] = useState('');
@@ -163,7 +166,7 @@ const IncomingRequests = () => {
                         type="button"
                         disabled={actionLoadingId !== null}
                         onClick={() => handleReject(req._id)}
-                        className="flex-1 md:flex-none py-2.5 px-4 rounded-xl font-semibold border border-rose-200 dark:border-rose-900/60 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20 text-xs flex items-center justify-center gap-1.5 disabled:opacity-60 transition-all duration-300"
+                        className="flex-1 md:flex-none py-2.5 px-4 rounded-xl font-semibold border border-rose-200 dark:border-rose-900/60 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20 text-xs flex items-center justify-center gap-1.5 disabled:opacity-60 transition-all duration-300 cursor-pointer"
                       >
                         <X className="h-3.5 w-3.5" />
                         Reject
@@ -172,13 +175,25 @@ const IncomingRequests = () => {
                         type="button"
                         disabled={actionLoadingId !== null}
                         onClick={() => handleAccept(req._id)}
-                        className="flex-1 md:flex-none py-2.5 px-4 rounded-xl font-bold bg-emerald-600 text-white hover:bg-emerald-700 text-xs flex items-center justify-center gap-1.5 disabled:opacity-60 transition-all duration-300 shadow-sm shadow-emerald-100 dark:shadow-none"
+                        className="flex-1 md:flex-none py-2.5 px-4 rounded-xl font-bold bg-emerald-600 text-white hover:bg-emerald-700 text-xs flex items-center justify-center gap-1.5 disabled:opacity-60 transition-all duration-300 shadow-sm shadow-emerald-100 dark:shadow-none cursor-pointer"
                       >
                         <Check className="h-3.5 w-3.5" />
                         Accept
                       </button>
                     </div>
                   )}
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setReportTargetUser({ id: peer._id, name: peer.name });
+                      setIsReportModalOpen(true);
+                    }}
+                    className="p-2 border border-rose-200 dark:border-rose-900/40 hover:bg-rose-50 dark:hover:bg-rose-950/25 text-rose-600 dark:text-rose-400 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1 shrink-0"
+                    title="Report User Profile"
+                  >
+                    ⚠ Report
+                  </button>
 
                 </div>
               </div>
