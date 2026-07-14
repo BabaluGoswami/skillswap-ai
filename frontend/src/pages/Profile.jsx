@@ -35,7 +35,10 @@ const Profile = () => {
       bio: '',
       github: '',
       linkedin: '',
-      portfolio: ''
+      portfolio: '',
+      skillsToTeach: '',
+      skillsToLearn: '',
+      availability: ''
     }
   });
 
@@ -58,7 +61,10 @@ const Profile = () => {
         bio: res.user.bio || '',
         github: res.user.github || '',
         linkedin: res.user.linkedin || '',
-        portfolio: res.user.portfolio || ''
+        portfolio: res.user.portfolio || '',
+        skillsToTeach: Array.isArray(res.user.skillsToTeach) ? res.user.skillsToTeach.join(', ') : '',
+        skillsToLearn: Array.isArray(res.user.skillsToLearn) ? res.user.skillsToLearn.join(', ') : '',
+        availability: res.user.availability || ''
       });
       if (res.user.profileImage) {
         setImagePreview(res.user.profileImage);
@@ -89,7 +95,10 @@ const Profile = () => {
         bio: currentUser.bio || '',
         github: currentUser.github || '',
         linkedin: currentUser.linkedin || '',
-        portfolio: currentUser.portfolio || ''
+        portfolio: currentUser.portfolio || '',
+        skillsToTeach: Array.isArray(currentUser.skillsToTeach) ? currentUser.skillsToTeach.join(', ') : '',
+        skillsToLearn: Array.isArray(currentUser.skillsToLearn) ? currentUser.skillsToLearn.join(', ') : '',
+        availability: currentUser.availability || ''
       });
       setImagePreview(currentUser.profileImage || null);
     }
@@ -146,6 +155,27 @@ const Profile = () => {
     formData.append('github', data.github);
     formData.append('linkedin', data.linkedin);
     formData.append('portfolio', data.portfolio);
+    formData.append('availability', data.availability);
+
+    // Split skills text inputs into arrays
+    const teachArr = data.skillsToTeach
+      ? data.skillsToTeach.split(',').map(s => s.trim()).filter(Boolean)
+      : [];
+    const learnArr = data.skillsToLearn
+      ? data.skillsToLearn.split(',').map(s => s.trim()).filter(Boolean)
+      : [];
+
+    if (teachArr.length > 0) {
+      teachArr.forEach(skill => formData.append('skillsToTeach', skill));
+    } else {
+      formData.append('skillsToTeach', '');
+    }
+
+    if (learnArr.length > 0) {
+      learnArr.forEach(skill => formData.append('skillsToLearn', skill));
+    } else {
+      formData.append('skillsToLearn', '');
+    }
 
     if (imageFile) {
       formData.append('profileImage', imageFile);
@@ -257,6 +287,34 @@ const Profile = () => {
                   </button>
                 </div>
               )}
+            </div>
+          </div>
+
+          {/* Teacher Ratings Card */}
+          <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 p-8 rounded-3xl shadow-sm space-y-4 theme-transition">
+            <div className="border-l-4 border-indigo-600 dark:border-indigo-500 pl-4 mb-2">
+              <h3 className="font-display font-bold text-sm text-slate-850 dark:text-white uppercase tracking-wider">Teacher Rating</h3>
+            </div>
+            <div className="grid grid-cols-2 gap-4 text-center">
+              <div className="p-4 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-100/50 dark:border-slate-800/30">
+                <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 block mb-1">Average Rating</span>
+                <div className="font-display font-extrabold text-xl text-slate-800 dark:text-white flex items-center justify-center gap-1">
+                  {user.ratingAverage && user.ratingAverage > 0 ? (
+                    <>
+                      <span>⭐</span>
+                      <span>{user.ratingAverage.toFixed(1)}</span>
+                    </>
+                  ) : (
+                    <span className="text-xs font-bold text-slate-400 dark:text-slate-500">No Ratings Yet</span>
+                  )}
+                </div>
+              </div>
+              <div className="p-4 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-100/50 dark:border-slate-800/30">
+                <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 block mb-1">Total Ratings</span>
+                <div className="font-display font-extrabold text-xl text-slate-800 dark:text-white">
+                  {user.totalRatings || 0}
+                </div>
+              </div>
             </div>
           </div>
 
@@ -385,6 +443,42 @@ const Profile = () => {
                     className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500 disabled:opacity-60 dark:text-white transition-colors duration-300 resize-none"
                   />
                   {errors.bio && <span className="text-xs text-rose-500">{errors.bio.message}</span>}
+                </div>
+
+                {/* Skills to Teach */}
+                <div className="space-y-1 md:col-span-2">
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Skills to Teach (comma separated)</label>
+                  <input 
+                    type="text" 
+                    disabled={!isEditing}
+                    placeholder={isEditing ? "e.g. JavaScript, Python, UI Design" : "Not configured yet"}
+                    {...register('skillsToTeach')}
+                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500 disabled:opacity-60 dark:text-white transition-colors duration-300"
+                  />
+                </div>
+
+                {/* Skills to Learn */}
+                <div className="space-y-1 md:col-span-2">
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Skills to Learn (comma separated)</label>
+                  <input 
+                    type="text" 
+                    disabled={!isEditing}
+                    placeholder={isEditing ? "e.g. Node.js, Machine Learning, English" : "Not configured yet"}
+                    {...register('skillsToLearn')}
+                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500 disabled:opacity-60 dark:text-white transition-colors duration-300"
+                  />
+                </div>
+
+                {/* Availability */}
+                <div className="space-y-1 md:col-span-2">
+                  <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Availability</label>
+                  <input 
+                    type="text" 
+                    disabled={!isEditing}
+                    placeholder={isEditing ? "e.g. Weekdays after 6 PM, Saturday afternoon" : "Not configured yet"}
+                    {...register('availability')}
+                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500 disabled:opacity-60 dark:text-white transition-colors duration-300"
+                  />
                 </div>
               </div>
             </div>

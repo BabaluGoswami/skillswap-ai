@@ -1,4 +1,5 @@
 import Feedback from '../models/Feedback.js';
+import User from '../models/User.js';
 import storageService from './storage.service.js';
 
 class FeedbackService {
@@ -8,33 +9,59 @@ class FeedbackService {
   async createFeedback(userId, data, file) {
     const { title, description, type, rating, pageUrl, routeName, browser, platform, screenResolution } = data;
 
-    // 1. Daily Rate Limit Check (max 5 per user per calendar day in server timezone)
-    const startOfToday = new Date();
-    startOfToday.setHours(0, 0, 0, 0);
+    // Teacher Rating Validation and Duplicate Check
+    if (title && title.trim() === 'Teacher Rating') {
+      let metadata;
+      try {
+        metadata = JSON.parse(description);
+      } catch (e) {
+        throw new Error('Invalid rating description metadata format.');
+      }
 
-    const endOfToday = new Date();
-    endOfToday.setHours(23, 59, 59, 999);
+      if (!metadata.swapRequestId || !metadata.teacherId) {
+        throw new Error('Missing swapRequestId or teacherId in rating metadata.');
+      }
 
-    const submissionsToday = await Feedback.countDocuments({
-      user: userId,
-      createdAt: { $gte: startOfToday, $lte: endOfToday }
-    });
+      if (userId.toString() === metadata.teacherId.toString()) {
+        throw new Error('Security protection: You cannot rate yourself.');
+      }
 
-    if (submissionsToday >= 5) {
-      throw new Error('Rate limit exceeded: You can submit a maximum of 5 feedback reports per day.');
-    }
+      const existing = await Feedback.findOne({
+        title: 'Teacher Rating',
+        description: { $regex: metadata.swapRequestId }
+      });
+      if (existing) {
+        throw new Error('Duplicate rating: You have already rated the teacher for this session.');
+      }
+    } else {
+      // 1. Daily Rate Limit Check (max 5 per user per calendar day in server timezone)
+      const startOfToday = new Date();
+      startOfToday.setHours(0, 0, 0, 0);
 
-    // 2. Duplicate Check (reject same title + description submitted within 10 minutes)
-    const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
-    const isDuplicate = await Feedback.findOne({
-      user: userId,
-      title: title.trim(),
-      description: description.trim(),
-      createdAt: { $gte: tenMinutesAgo }
-    });
+      const endOfToday = new Date();
+      endOfToday.setHours(23, 59, 59, 999);
 
-    if (isDuplicate) {
-      throw new Error('Duplicate submission detected: You submitted the same title and description in the last 10 minutes.');
+      const submissionsToday = await Feedback.countDocuments({
+        user: userId,
+        createdAt: { $gte: startOfToday, $lte: endOfToday }
+      });
+
+      if (submissionsToday >= 5) {
+        throw new Error('Rate limit exceeded: You can submit a maximum of 5 feedback reports per day.');
+      }
+
+      // 2. Duplicate Check (reject same title + description submitted within 10 minutes)
+      const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
+      const isDuplicate = await Feedback.findOne({
+        user: userId,
+        title: title.trim(),
+        description: description.trim(),
+        createdAt: { $gte: tenMinutesAgo }
+      });
+
+      if (isDuplicate) {
+        throw new Error('Duplicate submission detected: You submitted the same title and description in the last 10 minutes.');
+      }
     }
 
     // 3. Optional Screenshot Upload using existing storageService
@@ -78,6 +105,31 @@ class FeedbackService {
     });
 
     await feedback.save();
+
+    // If it is a Teacher Rating, update the teacher's User stats
+    if (feedback.title === 'Teacher Rating') {
+      try {
+        const metadata = JSON.parse(feedback.description);
+        const teacher = await User.findById(metadata.teacherId);
+        if (teacher) {
+          // Find all teacher ratings feedbacks
+          const feedbacks = await Feedback.find({
+            title: 'Teacher Rating',
+            description: { $regex: metadata.teacherId }
+          });
+          const totalRatings = feedbacks.length;
+          const averageRating = totalRatings > 0
+            ? parseFloat((feedbacks.reduce((acc, curr) => acc + curr.rating, 0) / totalRatings).toFixed(1))
+            : 0;
+          teacher.ratingAverage = averageRating;
+          teacher.totalRatings = totalRatings;
+          await teacher.save();
+        }
+      } catch (err) {
+        console.error('Error updating teacher rating stats:', err.message);
+      }
+    }
+
     return feedback;
   }
 

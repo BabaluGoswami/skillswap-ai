@@ -17,6 +17,7 @@ const errorHandler = (err, req, res, next) => {
       field: issue.path.join('.'),
       message: issue.message,
     }));
+    console.log("💥 ZOD VALIDATION FAILED DETAILS:", formattedErrors);
     
     return ApiResponse.error(
       res,

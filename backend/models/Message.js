@@ -38,6 +38,14 @@ const messageSchema = new mongoose.Schema({
     type: String,
     default: '',
   },
+  publicId: {
+    type: String,
+    default: '',
+  },
+  resource_type: {
+    type: String,
+    default: '',
+  },
   read: {
     type: Boolean,
     default: false,

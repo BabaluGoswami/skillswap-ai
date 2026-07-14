@@ -7,7 +7,8 @@ import {
   updateUserStatus,
   deleteUser,
   getFeedbacks,
-  updateFeedback
+  updateFeedback,
+  warnUser
 } from '../controllers/admin.controller.js';
 import protect from '../middlewares/auth.js';
 import adminOnly from '../middlewares/admin.middleware.js';
@@ -27,6 +28,7 @@ router.get('/users', getUsers);
 router.get('/users/:id', getUserById);
 router.patch('/users/:id/role', updateUserRole);
 router.patch('/users/:id/status', updateUserStatus);
+router.patch('/users/:id/warn', warnUser);
 router.delete('/users/:id', deleteUser);
 
 // Feedback management routes

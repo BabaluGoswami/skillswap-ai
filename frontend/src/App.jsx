@@ -31,6 +31,7 @@ import AdminSettings from '@pages/admin/AdminSettings.jsx';
 import FloatingFeedbackButton from '@components/FloatingFeedbackButton.jsx';
 import FeedbackModal from '@components/FeedbackModal.jsx';
 import ReportModal from '@components/ReportModal.jsx';
+import RatingModal from '@components/RatingModal.jsx';
 
 function AppContent() {
   const location = useLocation();
@@ -79,6 +80,7 @@ function AppContent() {
       <FloatingFeedbackButton />
       <FeedbackModal />
       <ReportModal />
+      <RatingModal />
     </div>
   );
 }

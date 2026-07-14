@@ -1,62 +1,46 @@
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const UPLOAD_DIR = path.resolve(__dirname, '../uploads/chat');
-
-// Ensure upload directory exists
-if (!fs.existsSync(UPLOAD_DIR)) {
-  fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-}
+import storageService from './storage.service.js';
 
 class ChatStorageService {
   /**
-   * Save an uploaded file to backend/uploads/chat.
-   * Generates a unique filename using timestamp and random string.
+   * Save an uploaded file to Cloudinary.
+   * Utilizes the existing storageService Cloudinary configuration.
    */
   async saveAttachment(file) {
     if (!file) throw new Error('No file provided for upload.');
 
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const originalExt = path.extname(file.originalname);
-    const cleanBaseName = path.basename(file.originalname, originalExt).replace(/[^a-zA-Z0-9]/g, '_');
-    const fileName = `${cleanBaseName}-${uniqueSuffix}${originalExt}`;
-    const destinationPath = path.join(UPLOAD_DIR, fileName);
-
-    // Save Multer memory buffer to file (in case of memory storage) or rename file (if using disk storage)
-    if (file.buffer) {
-      await fs.promises.writeFile(destinationPath, file.buffer);
-    } else if (file.path) {
-      await fs.promises.rename(file.path, destinationPath);
-    } else {
-      throw new Error('Unsupported file upload structure.');
+    // Determine Cloudinary resource type based on mimeType
+    let resourceType = 'raw'; // Default for documents/files
+    if (file.mimetype) {
+      if (file.mimetype.startsWith('image/')) {
+        resourceType = 'image';
+      } else if (file.mimetype.startsWith('video/')) {
+        resourceType = 'video';
+      }
     }
 
-    const attachmentUrl = `/uploads/chat/${fileName}`;
+    // Stream upload directly to Cloudinary
+    const uploadResult = await storageService.saveAttachment(file.buffer, file.originalname, resourceType);
 
     return {
-      attachmentUrl,
+      attachmentUrl: uploadResult.secure_url,
       fileName: file.originalname,
-      storedFileName: fileName,
+      storedFileName: uploadResult.public_id, // Retain for rollback compatibility
+      publicId: uploadResult.public_id,
+      resource_type: uploadResult.resource_type,
       fileSize: file.size,
       mimeType: file.mimetype
     };
   }
 
   /**
-   * Delete a stored file from storage. Used for rollbacks and deletions.
+   * Delete a stored file from Cloudinary (used for rollback).
    */
-  async deleteAttachment(storedFileName) {
-    if (!storedFileName) return;
-    const targetPath = path.join(UPLOAD_DIR, storedFileName);
+  async deleteAttachment(publicId, resourceType) {
+    if (!publicId) return;
     try {
-      if (fs.existsSync(targetPath)) {
-        await fs.promises.unlink(targetPath);
-      }
+      await storageService.deleteFile(publicId, resourceType);
     } catch (error) {
-      console.error(`Failed to delete attachment file: ${storedFileName}`, error);
+      console.error(`Failed to delete Cloudinary chat file: ${publicId}`, error);
     }
   }
 }

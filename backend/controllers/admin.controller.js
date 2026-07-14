@@ -359,3 +359,40 @@ export const updateFeedback = asyncHandler(async (req, res) => {
 
   return ApiResponse.success(res, 'Feedback updated successfully.', feedback, HTTP_STATUS.OK);
 });
+
+/**
+ * PATCH /api/admin/users/:id/warn
+ * Send a direct warning to a user (Admin Only).
+ */
+export const warnUser = asyncHandler(async (req, res) => {
+  const targetUserId = req.params.id;
+  const { reason, adminNote } = req.body;
+
+  if (req.user._id.toString() === targetUserId) {
+    return ApiResponse.error(res, 'Self-action protection: You cannot modify your own warnings.', [], HTTP_STATUS.BAD_REQUEST);
+  }
+
+  const user = await User.findById(targetUserId);
+  if (!user || user.status === 'deleted') {
+    return ApiResponse.error(res, 'User not found.', [], HTTP_STATUS.NOT_FOUND);
+  }
+
+  if (user.role === 'Admin') {
+    return ApiResponse.error(res, 'Security protection: Administrative accounts cannot be warned.', [], HTTP_STATUS.FORBIDDEN);
+  }
+
+  user.warningsCount = (user.warningsCount || 0) + 1;
+  user.warnings.push({
+    reason: reason || 'Direct Warning',
+    adminNote: adminNote || 'Official warning issued by Administrator.',
+    date: new Date()
+  });
+
+  user.notifications.push({
+    message: `Your account received a warning from administration: ${reason || 'Direct Warning'}. (Total warnings: ${user.warningsCount})`
+  });
+
+  await user.save();
+
+  return ApiResponse.success(res, 'Warning issued to user successfully.', user, HTTP_STATUS.OK);
+});

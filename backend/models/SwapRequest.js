@@ -15,7 +15,7 @@ const swapRequestSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['Pending', 'Accepted', 'Rejected', 'Cancelled'],
+    enum: ['Pending', 'Accepted', 'Rejected', 'Cancelled', 'CompletionRequested', 'Completed'],
     default: 'Pending',
     required: true,
     index: true,
@@ -24,7 +24,16 @@ const swapRequestSchema = new mongoose.Schema({
     type: String,
     trim: true,
     default: '',
-  }
+  },
+  completionRequestedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
+  completedSkills: [{
+    type: String,
+    trim: true
+  }]
 }, {
   timestamps: true,
 });

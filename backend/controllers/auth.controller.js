@@ -55,6 +55,8 @@ export const register = asyncHandler(async (req, res) => {
     role: user.role,
     skillsToTeach: user.skillsToTeach,
     skillsToLearn: user.skillsToLearn,
+    xp: user.xp,
+    level: user.level,
   };
 
   return ApiResponse.success(
@@ -131,6 +133,8 @@ export const login = asyncHandler(async (req, res) => {
     role: user.role,
     skillsToTeach: user.skillsToTeach,
     skillsToLearn: user.skillsToLearn,
+    xp: user.xp,
+    level: user.level,
   };
 
   return ApiResponse.success(

@@ -47,6 +47,10 @@ const userSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  totalRatings: {
+    type: Number,
+    default: 0,
+  },
   totalTeachingHours: {
     type: Number,
     default: 0,
@@ -87,6 +91,11 @@ const userSchema = new mongoose.Schema({
     trim: true,
     default: '',
   },
+  availability: {
+    type: String,
+    trim: true,
+    default: '',
+  },
   profileImage: {
     type: String,
     default: '',
@@ -98,6 +107,19 @@ const userSchema = new mongoose.Schema({
   warningsCount: {
     type: Number,
     default: 0,
+  },
+  warnings: [{
+    reason: { type: String, required: true },
+    adminNote: { type: String, default: '' },
+    date: { type: Date, default: Date.now }
+  }],
+  xp: {
+    type: Number,
+    default: 0,
+  },
+  level: {
+    type: Number,
+    default: 1,
   },
   notifications: [{
     message: { type: String, required: true },

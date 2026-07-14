@@ -5,6 +5,16 @@ import User from '../models/User.js';
 
 // Global map tracking online users: userId string -> Set of socketIds
 export const onlineUsers = new Map();
+export let ioInstance = null;
+
+/**
+ * Helper to emit socket events to a specific user.
+ */
+export const emitToUser = (userId, event, data) => {
+  if (ioInstance) {
+    ioInstance.to(userId.toString()).emit(event, data);
+  }
+};
 
 /**
  * Initializes and configures Socket.io handlers.
@@ -16,6 +26,7 @@ export const initSocket = (httpServer) => {
       methods: ['GET', 'POST', 'PATCH', 'DELETE'],
     }
   });
+  ioInstance = io;
 
   // Socket authentication middleware
   io.use(async (socket, next) => {

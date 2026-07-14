@@ -54,11 +54,16 @@ export const getProfile = asyncHandler(async (req, res) => {
     github: user.github,
     linkedin: user.linkedin,
     portfolio: user.portfolio,
+    availability: user.availability,
     profileImage: user.profileImage,
     profileCompletionPercentage: completionPercentage,
+    xp: user.xp,
+    level: user.level,
+    totalRatings: user.totalRatings || 0,
     updatedAt: user.updatedAt,
   };
 
+  console.log("Backend Profile response:", { xp: userData.xp, level: userData.level });
   return ApiResponse.success(res, 'Profile fetched successfully.', { user: userData }, HTTP_STATUS.OK);
 });
 
@@ -68,7 +73,7 @@ export const getProfile = asyncHandler(async (req, res) => {
  */
 export const updateProfile = asyncHandler(async (req, res) => {
   const userId = req.user._id;
-  const { name, university, branch, year, bio, github, linkedin, portfolio } = req.body;
+  const { name, university, branch, year, bio, github, linkedin, portfolio, availability } = req.body;
 
   const user = await User.findById(userId);
   if (!user) {
@@ -109,6 +114,21 @@ export const updateProfile = asyncHandler(async (req, res) => {
   if (github !== undefined) user.github = github;
   if (linkedin !== undefined) user.linkedin = linkedin;
   if (portfolio !== undefined) user.portfolio = portfolio;
+  if (availability !== undefined) user.availability = availability;
+  if (req.body.skillsToTeach !== undefined) {
+    if (Array.isArray(req.body.skillsToTeach)) {
+      user.skillsToTeach = req.body.skillsToTeach;
+    } else if (typeof req.body.skillsToTeach === 'string') {
+      user.skillsToTeach = req.body.skillsToTeach.split(',').map(s => s.trim()).filter(Boolean);
+    }
+  }
+  if (req.body.skillsToLearn !== undefined) {
+    if (Array.isArray(req.body.skillsToLearn)) {
+      user.skillsToLearn = req.body.skillsToLearn;
+    } else if (typeof req.body.skillsToLearn === 'string') {
+      user.skillsToLearn = req.body.skillsToLearn.split(',').map(s => s.trim()).filter(Boolean);
+    }
+  }
 
   await user.save();
 
@@ -132,8 +152,12 @@ export const updateProfile = asyncHandler(async (req, res) => {
     github: user.github,
     linkedin: user.linkedin,
     portfolio: user.portfolio,
+    availability: user.availability,
     profileImage: user.profileImage,
     profileCompletionPercentage: completionPercentage,
+    xp: user.xp,
+    level: user.level,
+    totalRatings: user.totalRatings || 0,
     updatedAt: user.updatedAt,
   };
 
@@ -193,6 +217,9 @@ export const addSkillToTeach = asyncHandler(async (req, res) => {
     portfolio: user.portfolio,
     profileImage: user.profileImage,
     profileCompletionPercentage: completionPercentage,
+    xp: user.xp,
+    level: user.level,
+    totalRatings: user.totalRatings || 0,
     updatedAt: user.updatedAt,
   };
 
@@ -233,6 +260,7 @@ export const getMatches = asyncHandler(async (req, res) => {
         skillsToLearn: otherUser.skillsToLearn,
         ratingAverage: otherUser.ratingAverage,
         totalSessions: otherUser.totalSessions,
+        totalRatings: otherUser.totalRatings || 0,
         profileCompletionPercentage: completionPercentage,
         updatedAt: otherUser.updatedAt,
         matchScore: matchResult.matchScore,

@@ -207,6 +207,11 @@ export const updateReport = asyncHandler(async (req, res) => {
       return ApiResponse.error(res, 'Reported user profile no longer exists.', [], HTTP_STATUS.NOT_FOUND);
     }
     user.warningsCount = (user.warningsCount || 0) + 1;
+    user.warnings.push({
+      reason: report.reason,
+      adminNote: adminNote || 'Official warning sent by moderator.',
+      date: new Date()
+    });
     user.notifications.push({
       message: `Your account received a warning from administration. (Total warnings: ${user.warningsCount})`
     });

@@ -198,7 +198,9 @@ export const uploadAttachment = asyncHandler(async (req, res) => {
       attachmentUrl: savedFile.attachmentUrl,
       fileName: savedFile.fileName,
       fileSize: savedFile.fileSize,
-      mimeType: savedFile.mimeType
+      mimeType: savedFile.mimeType,
+      publicId: savedFile.publicId,
+      resource_type: savedFile.resource_type
     });
 
     // 5. Broadcast message via Socket.io
@@ -216,7 +218,7 @@ export const uploadAttachment = asyncHandler(async (req, res) => {
     );
   } catch (error) {
     // ATOMIC ROLLBACK: delete physical file to prevent orphan uploads
-    await chatStorageService.deleteAttachment(savedFile.storedFileName);
+    await chatStorageService.deleteAttachment(savedFile.storedFileName, savedFile.resource_type);
 
     return ApiResponse.error(
       res,

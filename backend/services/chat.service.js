@@ -12,7 +12,7 @@ class ChatService {
         { sender: user1, receiver: user2 },
         { sender: user2, receiver: user1 }
       ],
-      status: 'Accepted'
+      status: { $in: ['Accepted', 'CompletionRequested', 'Completed'] }
     });
 
     if (!swap) {
@@ -25,10 +25,13 @@ class ChatService {
    * Creates a message (text or attachment).
    */
   async createMessage(senderId, receiverId, payload) {
-    const { text, messageType, attachmentUrl, fileName, fileSize, mimeType } = payload;
+    const { text, messageType, attachmentUrl, fileName, fileSize, mimeType, publicId, resource_type } = payload;
 
     // 1. Enforce active swap request
-    await this.validateAcceptedSwap(senderId, receiverId);
+    const swap = await this.validateAcceptedSwap(senderId, receiverId);
+    if (swap.status === 'Completed') {
+      throw new Error('Unauthorized: You cannot send messages in a completed learning session.');
+    }
 
     // 2. Get or create conversation
     let conv = await Conversation.findOne({
@@ -50,7 +53,9 @@ class ChatService {
       attachmentUrl: attachmentUrl || '',
       fileName: fileName || '',
       fileSize: fileSize || 0,
-      mimeType: mimeType || ''
+      mimeType: mimeType || '',
+      publicId: publicId || '',
+      resource_type: resource_type || ''
     });
 
     // 4. Update latest conversation activity details
@@ -146,7 +151,7 @@ class ChatService {
           { sender: userId, receiver: peer._id },
           { sender: peer._id, receiver: userId }
         ],
-        status: 'Accepted'
+        status: { $in: ['Accepted', 'CompletionRequested', 'Completed'] }
       });
 
       if (!hasSwap) continue;

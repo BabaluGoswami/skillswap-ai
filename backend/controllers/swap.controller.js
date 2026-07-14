@@ -136,3 +136,81 @@ export const cancelSwap = asyncHandler(async (req, res) => {
     );
   }
 });
+
+/**
+ * Request completion of an active session.
+ * PATCH /api/swaps/:id/request-completion
+ */
+export const requestCompletion = asyncHandler(async (req, res) => {
+  const requestId = req.params.id;
+  const userId = req.user._id;
+
+  try {
+    const request = await swapService.requestCompletion(requestId, userId);
+    return ApiResponse.success(
+      res,
+      'Session completion requested successfully.',
+      { request },
+      HTTP_STATUS.OK
+    );
+  } catch (error) {
+    return ApiResponse.error(
+      res,
+      error.message || 'Failed to request session completion.',
+      [],
+      HTTP_STATUS.BAD_REQUEST
+    );
+  }
+});
+
+/**
+ * Accept session completion request.
+ * PATCH /api/swaps/:id/accept-completion
+ */
+export const acceptCompletion = asyncHandler(async (req, res) => {
+  const requestId = req.params.id;
+  const userId = req.user._id;
+
+  try {
+    const request = await swapService.acceptCompletion(requestId, userId);
+    return ApiResponse.success(
+      res,
+      'Session marked as completed successfully.',
+      { request },
+      HTTP_STATUS.OK
+    );
+  } catch (error) {
+    return ApiResponse.error(
+      res,
+      error.message || 'Failed to accept session completion.',
+      [],
+      HTTP_STATUS.BAD_REQUEST
+    );
+  }
+});
+
+/**
+ * Reject session completion request.
+ * PATCH /api/swaps/:id/reject-completion
+ */
+export const rejectCompletion = asyncHandler(async (req, res) => {
+  const requestId = req.params.id;
+  const userId = req.user._id;
+
+  try {
+    const request = await swapService.rejectCompletion(requestId, userId);
+    return ApiResponse.success(
+      res,
+      'Session completion rejected.',
+      { request },
+      HTTP_STATUS.OK
+    );
+  } catch (error) {
+    return ApiResponse.error(
+      res,
+      error.message || 'Failed to reject session completion.',
+      [],
+      HTTP_STATUS.BAD_REQUEST
+    );
+  }
+});

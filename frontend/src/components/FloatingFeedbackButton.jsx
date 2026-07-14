@@ -12,7 +12,7 @@ const FloatingFeedbackButton = () => {
   const location = useLocation();
   const [showTooltip, setShowTooltip] = useState(false);
 
-  const hideRoutes = ['/login', '/register', '/forgot-password', '/reset-password'];
+  const hideRoutes = ['/login', '/register', '/forgot-password', '/reset-password', '/chat'];
   const shouldHide = hideRoutes.includes(location.pathname) || !isAuthenticated || location.pathname.startsWith('/admin');
 
   if (shouldHide) return null;
@@ -36,7 +36,8 @@ const FloatingFeedbackButton = () => {
         onClick={handleClick}
         onMouseEnter={() => setShowTooltip(true)}
         onMouseLeave={() => setShowTooltip(false)}
-        className="p-3.5 bg-indigo-650 hover:bg-indigo-700 text-white rounded-full shadow-lg hover:shadow-indigo-150 hover:-translate-y-0.5 active:translate-y-0 active:scale-95 transition-all cursor-pointer group flex items-center justify-center border border-indigo-500/20"
+        style={{ backgroundColor: '#4f46e5', color: '#ffffff' }}
+        className="p-3.5 rounded-full shadow-xl hover:shadow-indigo-500/30 hover:-translate-y-0.5 active:translate-y-0 active:scale-95 transition-all cursor-pointer group flex items-center justify-center border border-indigo-500/20 hover:scale-105"
       >
         <MessageSquarePlus className="h-6 w-6 group-hover:rotate-6 transition-transform duration-200" />
       </button>

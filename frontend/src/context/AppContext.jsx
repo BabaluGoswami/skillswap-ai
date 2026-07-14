@@ -20,13 +20,19 @@ export const AppProvider = ({ children }) => {
   const [feedbackInitialType, setFeedbackInitialType] = useState('General Feedback');
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [reportTargetUser, setReportTargetUser] = useState(null); // { id, name }
+  const [ratingTarget, setRatingTarget] = useState(null); // { swapRequestId, teacherId, teacherName }
 
   // Manage socket.io-client lifecycle
   useEffect(() => {
     let activeSocket = null;
     if (token) {
       activeSocket = io(API_BASE_URL, {
-        auth: { token }
+        auth: { token },
+        reconnection: true,
+        reconnectionAttempts: 5,
+        reconnectionDelay: 5000,
+        reconnectionDelayMax: 20000,
+        timeout: 10000
       });
       setSocket(activeSocket);
     } else {
@@ -39,6 +45,18 @@ export const AppProvider = ({ children }) => {
       }
     };
   }, [token]);
+
+  // Sync profile details automatically on socket updates
+  useEffect(() => {
+    if (!socket) return;
+    const handleNotificationUpdate = () => {
+      getUserProfile();
+    };
+    socket.on('notification_update', handleNotificationUpdate);
+    return () => {
+      socket.off('notification_update', handleNotificationUpdate);
+    };
+  }, [socket]);
 
   // Sync state changes with localStorage
   useEffect(() => {
@@ -149,6 +167,40 @@ export const AppProvider = ({ children }) => {
     }
   };
 
+  // Add user skill to learn
+  const addUserSkillToLearn = async (skill) => {
+    setLoading(true);
+    try {
+      const currentSkills = currentUser?.skillsToLearn || [];
+      const updatedSkills = [...currentSkills, skill.trim()];
+      
+      const response = await fetch(`${API_BASE_URL}/api/users/profile`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ skillsToLearn: updatedSkills }),
+      });
+
+      const resData = await response.json();
+
+      if (!response.ok) {
+        throw new Error(resData.message || 'Failed to add skill.');
+      }
+
+      // Sync state and storage
+      setCurrentUser(resData.data.user);
+      localStorage.setItem('user', JSON.stringify(resData.data.user));
+      return { success: true };
+    } catch (error) {
+      console.error('Add Learn Skill Error:', error.message);
+      return { success: false, error: error.message };
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Get user profile details
   const getUserProfile = async () => {
     setLoading(true);
@@ -167,6 +219,7 @@ export const AppProvider = ({ children }) => {
       }
 
       // Sync state and storage
+      console.log("AppContext getUserProfile response:", { xp: resData.data.user.xp, level: resData.data.user.level });
       setCurrentUser(resData.data.user);
       localStorage.setItem('user', JSON.stringify(resData.data.user));
       return { success: true, user: resData.data.user };
@@ -389,6 +442,67 @@ export const AppProvider = ({ children }) => {
       return { success: false, error: error.message };
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Request session completion
+  const requestSwapCompletion = async (id) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/swaps/${id}/request-completion`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const resData = await response.json();
+      if (!response.ok) {
+        throw new Error(resData.message || 'Failed to request session completion.');
+      }
+      return { success: true, request: resData.data.request };
+    } catch (error) {
+      console.error('Request Swap Completion Error:', error.message);
+      return { success: false, error: error.message };
+    }
+  };
+
+  // Accept session completion
+  const acceptSwapCompletion = async (id) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/swaps/${id}/accept-completion`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const resData = await response.json();
+      if (!response.ok) {
+        throw new Error(resData.message || 'Failed to accept session completion.');
+      }
+      await getUserProfile();
+      return { success: true, request: resData.data.request };
+    } catch (error) {
+      console.error('Accept Swap Completion Error:', error.message);
+      return { success: false, error: error.message };
+    }
+  };
+
+  // Reject session completion
+  const rejectSwapCompletion = async (id) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/swaps/${id}/reject-completion`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const resData = await response.json();
+      if (!response.ok) {
+        throw new Error(resData.message || 'Failed to reject session completion.');
+      }
+      return { success: true, request: resData.data.request };
+    } catch (error) {
+      console.error('Reject Swap Completion Error:', error.message);
+      return { success: false, error: error.message };
     }
   };
 
@@ -803,6 +917,46 @@ export const AppProvider = ({ children }) => {
     }
   };
 
+  // Mark One Notification as Read
+  const markNotificationRead = async (notificationId) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/reports/notifications/${notificationId}`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const resData = await response.json();
+      if (!response.ok) {
+        throw new Error(resData.message || 'Failed to mark notification as read.');
+      }
+      return { success: true, notifications: resData.data };
+    } catch (error) {
+      console.error('Mark Notification Read Error:', error.message);
+      return { success: false, error: error.message };
+    }
+  };
+
+  // Mark All Notifications as Read
+  const markAllNotificationsRead = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/reports/notifications`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const resData = await response.json();
+      if (!response.ok) {
+        throw new Error(resData.message || 'Failed to mark all notifications read.');
+      }
+      return { success: true, notifications: resData.data };
+    } catch (error) {
+      console.error('Mark All Notifications Read Error:', error.message);
+      return { success: false, error: error.message };
+    }
+  };
+
   const value = {
     currentUser,
     token,
@@ -813,6 +967,7 @@ export const AppProvider = ({ children }) => {
     registerUser,
     logoutUser,
     addUserSkillToTeach,
+    addUserSkillToLearn,
     getUserProfile,
     updateUserProfile,
     getMatchedUsers,
@@ -822,6 +977,9 @@ export const AppProvider = ({ children }) => {
     acceptSwapRequest,
     rejectSwapRequest,
     cancelSwapRequest,
+    requestSwapCompletion,
+    acceptSwapCompletion,
+    rejectSwapCompletion,
     getConversations,
     getMessages,
     sendChatMessage,
@@ -846,10 +1004,14 @@ export const AppProvider = ({ children }) => {
     updateAdminReport,
     getUserNotifications,
     clearNotifications,
+    markNotificationRead,
+    markAllNotificationsRead,
     isReportModalOpen,
     setIsReportModalOpen,
     reportTargetUser,
     setReportTargetUser,
+    ratingTarget,
+    setRatingTarget,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

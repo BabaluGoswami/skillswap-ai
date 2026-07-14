@@ -79,15 +79,46 @@ class StorageService {
    * Delete file from Cloudinary using publicId.
    * 
    * @param {String} publicId - Cloudinary public_id.
+   * @param {String} resourceType - Cloudinary resource type.
    */
-  async deleteFile(publicId) {
+  async deleteFile(publicId, resourceType) {
     if (!publicId) return;
 
     try {
-      await cloudinary.uploader.destroy(publicId);
+      await cloudinary.uploader.destroy(publicId, { resource_type: resourceType || 'image' });
     } catch (error) {
       console.error(`Failed to delete Cloudinary file: ${publicId}`, error.message);
     }
+  }
+
+  /**
+   * Save general attachment buffer to Cloudinary.
+   * 
+   * @param {Buffer} buffer - File buffer.
+   * @param {String} originalName - Original filename.
+   * @param {String} resourceType - Cloudinary resource type ('image', 'video', 'raw').
+   * @returns {Promise<Object>} - Object containing secure_url, public_id, and resource_type.
+   */
+  async saveAttachment(buffer, originalName, resourceType = 'auto') {
+    return new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        {
+          folder: 'skillswap-ai/chat-attachments',
+          resource_type: resourceType
+        },
+        (error, result) => {
+          if (error) {
+            return reject(new Error(`Cloudinary attachment upload failed: ${error.message}`));
+          }
+          resolve({
+            secure_url: result.secure_url,
+            public_id: result.public_id,
+            resource_type: result.resource_type
+          });
+        }
+      );
+      uploadStream.end(buffer);
+    });
   }
 }
 
