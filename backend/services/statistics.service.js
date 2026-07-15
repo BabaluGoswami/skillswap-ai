@@ -17,7 +17,9 @@ class StatisticsService {
     // 3. Completed learning sessions
     let completedSessions = 0;
     try {
-      completedSessions = await Session.countDocuments({ status: 'Completed' });
+      completedSessions = await SwapRequest.countDocuments({
+        status: "Completed",
+      });
     } catch (error) {
       console.warn('Session model status count fallback:', error.message);
     }
